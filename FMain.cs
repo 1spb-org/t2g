@@ -66,7 +66,7 @@ namespace T2G
             sfd.Filter = "Chart Json|*.chartjson|All files|*.*";
             if (sfd.ShowDialog() == DialogResult.OK)
             {
-              LoadChartFile(sfd.FileName);
+                LoadChartFile(sfd.FileName);
                 if (_cf != null)
                     InitPlotFromFile();
             }
@@ -118,7 +118,7 @@ namespace T2G
                         MessageBox.Show("Specify export format, please");
                         break;
                 }
-            
+
             }
 
         }
@@ -133,24 +133,30 @@ namespace T2G
             plotView.Model.TitleFont = _cf?.FontName ?? plotView.Model.TitleFont;
 
             if (_cf.Series != null)
-            foreach(ChSeries cs in _cf.Series)
-            {
-                if (cs.Points == null)
-                    continue;
-                FunctionSeries fs = new FunctionSeries();
-                fs.Title = cs.Name;
-                
-                fs.MarkerSize = cs.MarkerSize;
-                fs.MarkerType = MarkerType.Circle;
-                    
-                foreach (var L in cs.Points)                
-                    fs.Points.Add(new OxyPlot.DataPoint(L[0], L[1]));
-                
-                if(!string.IsNullOrEmpty(cs.Color))
-                try { fs.Color = OxyColor.Parse(cs.Color); } catch { }
+                foreach (ChSeries cs in _cf.Series)
+                {
+                    if (cs.Points == null)
+                        continue;
 
-                plotView.Model.Series.Add(fs);
-            }
+                    int Q = cs.Points.First().Count;
+                    for (int i = 1; i < Q; i++)
+                    {
+                        FunctionSeries fs = new FunctionSeries();
+                        fs.Title = cs.Name;
+
+                        fs.MarkerSize = cs.MarkerSize;
+                        fs.MarkerType = MarkerType.Circle;
+                        fs.LineStyle = (LineStyle)((i - 1) % 9);
+
+                        foreach (var L in cs.Points)
+                            fs.Points.Add(new OxyPlot.DataPoint(L[0], L[i]));
+
+                        if (!string.IsNullOrEmpty(cs.Color))
+                            try { fs.Color = OxyColor.Parse(cs.Color); } catch { }
+
+                        plotView.Model.Series.Add(fs);
+                    }
+                }
 
             plotView.InvalidatePlot(true);
 
@@ -163,7 +169,7 @@ namespace T2G
             {
                 _cf = JsonConvert.DeserializeObject<ChartFile>(File.ReadAllText(name));
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 _cf = null;
                 MessageBox.Show(e.Message);
@@ -179,7 +185,7 @@ namespace T2G
                 File.WriteAllText(name, JsonConvert.SerializeObject(CF, Formatting.Indented));
             }
             catch
-            { 
+            {
             }
         }
 
@@ -188,15 +194,15 @@ namespace T2G
             SaveFileDialog sfd = new SaveFileDialog();
             sfd.Filter = "Chart Json|*.chartjson|All files|*.*";
             if (sfd.ShowDialog() == DialogResult.OK)
-            {                     
-                SaveChartFile(sfd.FileName, _cf ?? ChartFromPlot());              
+            {
+                SaveChartFile(sfd.FileName, _cf ?? ChartFromPlot());
             }
 
         }
 
         private ChartFile? ChartFromPlot()
         {
-            ChartFile cf = new ChartFile { Title = plotView.Model.Title,  Series = new List<ChSeries> { } };
+            ChartFile cf = new ChartFile { Title = plotView.Model.Title, Series = new List<ChSeries> { } };
 
             cf.FontHeight = plotView.Model.DefaultFontSize;
             cf.FontName = plotView.Model.DefaultFont;
@@ -205,12 +211,13 @@ namespace T2G
 
             foreach (FunctionSeries t in plotView.Model.Series)
             {
-                ChSeries s = new ChSeries {
+                ChSeries s = new ChSeries
+                {
                     Points = new List<List<double>>()
                 };
 
                 foreach (DataPoint p in t.Points)
-                   s.Points.Add(new List<double> { p.X, p.Y });
+                    s.Points.Add(new List<double> { p.X, p.Y });
 
                 s.Name = t.Title;
                 s.Color = t.Color.ToByteString();
@@ -219,7 +226,7 @@ namespace T2G
             }
 
 
-            return cf; 
+            return cf;
         }
 
         private void RandPlot()
@@ -234,8 +241,6 @@ namespace T2G
         {
             if (_cf == null)
                 RandPlot();
-
-
         }
 
         private int Rand(int v1, int v2)
@@ -274,13 +279,13 @@ namespace T2G
 
             FunctionSeries fs = new FunctionSeries();
             double s = 0.005 * Math.PI, x, y;
-            for (double t = - Math.PI * 2; t <= Math.PI * 2; t += s)
+            for (double t = -Math.PI * 2; t <= Math.PI * 2; t += s)
             {
                 x = NewtonCotesTrapeziumRule.IntegrateAdaptive(x => Math.Cos(x * x), 0, t, 1e-5);
                 y = NewtonCotesTrapeziumRule.IntegrateAdaptive(x => Math.Sin(x * x), 0, t, 1e-5);
                 fs.Points.Add(new OxyPlot.DataPoint(x, y));
             }
-             
+
 
             fs.Color = RandColor(Color.Black, Color.LightGray);
 
